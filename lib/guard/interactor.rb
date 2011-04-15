@@ -1,4 +1,6 @@
 module Guard
+  
+  # @private
   module Interactor
     
     def self.init_signal_traps

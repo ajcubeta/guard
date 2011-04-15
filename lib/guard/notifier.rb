@@ -2,9 +2,11 @@ require 'rbconfig'
 require 'pathname'
 
 module Guard
+
+  # @private
   module Notifier
-    
-    def self.notify(message, options = {})
+
+    def self.notify(message, options={})
       unless ENV["GUARD_ENV"] == "test"
         image = options[:image] || :success
         title = options[:title] || "Guard"
@@ -20,9 +22,9 @@ module Guard
         end
       end
     end
-    
+
   private
-    
+
     def self.image_path(image)
       images_path = Pathname.new(File.dirname(__FILE__)).join('../../images')
       case image
@@ -37,7 +39,7 @@ module Guard
         image
       end
     end
-    
+
     def self.growl_installed?
       @installed ||= begin
         require 'growl'
@@ -47,7 +49,7 @@ module Guard
         false
       end
     end
-    
+
     def self.libnotify_installed?
       @installed ||= begin
         require 'libnotify'
@@ -57,6 +59,6 @@ module Guard
         false
       end
     end
-    
+
   end
 end

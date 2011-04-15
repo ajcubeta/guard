@@ -6,9 +6,12 @@ module Guard
   autoload :Linux,   'guard/listeners/linux'
   autoload :Polling, 'guard/listeners/polling'
 
+  # @abstract Subclass and override {.usable?}, {#start}, {#stop} and {#on_change} to implement a custom Listener class.
+  # @private
   class Listener
     attr_reader :last_event
 
+    # @private
     def self.select_and_init
       if mac? && Darwin.usable?
         Darwin.new
@@ -31,6 +34,22 @@ module Guard
     def modified_files(dirs, options = {})
       files = potentially_modified_files(dirs, options).select { |path| File.file?(path) && recent_file?(path) }
       files.map! { |file| file.gsub("#{Dir.pwd}/", '') }
+    end
+
+    def self.usable?
+      raise "self.usable? should be implemented in inherited class only!"
+    end
+
+    def start
+      raise "#start should be implemented in inherited class only!"
+    end
+
+    def stop
+      raise "#stop should be implemented in inherited class only!"
+    end
+
+    def on_change
+      raise "#on_change should be implemented in inherited class only!"
     end
 
   private

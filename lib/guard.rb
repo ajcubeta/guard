@@ -10,17 +10,20 @@ module Guard
   autoload :Notifier,   'guard/notifier'
 
   class << self
+    # @private
     attr_accessor :options, :guards, :listener
 
     # initialize this singleton
-    def setup(options = {})
+    # @private
+    def setup(options={})
       @options  = options
       @listener = Listener.select_and_init
       @guards   = []
       self
     end
 
-    def start(options = {})
+    # @private
+    def start(options={})
       setup(options)
 
       Interactor.init_signal_traps
@@ -30,8 +33,8 @@ module Guard
         UI.error "No guards found in Guardfile, please add at least one."
       else
         listener.on_change do |files|
-          if Watcher.match_files?(guards, files)
-            run { run_on_change_for_all_guards(files) }
+          if guards_to_run = Watcher.guards_matching_files?(guards, files)
+            run { on_change_for_guards_to_run(guards_to_run, files) }
           end
         end
 
@@ -41,11 +44,13 @@ module Guard
       end
     end
 
-    def run_on_change_for_all_guards(files)
-      guards.each do |guard|
+    # @private
+    def on_change_for_guards_to_run(guards_to_run, files)
+      guards_to_run.each do |guard|
         paths = Watcher.match_files(guard, files)
         supervised_task(guard, :run_on_change, paths) unless paths.empty?
       end
+      
       # Reparse the whole directory to catch new files modified during the guards run
       new_modified_files = listener.modified_files([Dir.pwd + '/'], :all => true)
       listener.update_last_event
@@ -56,6 +61,7 @@ module Guard
 
     # Let a guard execute its task but
     # fire it if his work leads to a system failure
+    # @private
     def supervised_task(guard, task_to_supervise, *args)
       guard.send(task_to_supervise, *args)
     rescue Exception
@@ -65,6 +71,7 @@ module Guard
       return $!
     end
 
+    # @private
     def run
       listener.stop
       UI.clear if options[:clear]
@@ -75,18 +82,20 @@ module Guard
       listener.start
     end
 
-    def add_guard(name, watchers = [], options = {})
-      guard_class = get_guard_class(name)
-      @guards << guard_class.new(watchers, options)
+    # @private
+    def add_guard(name, watchers=[], options={})
+      @guards << get_guard_class(name).new(watchers, options)
     end
 
+    # @private
     def get_guard_class(name)
       require "guard/#{name.downcase}"
-      self.const_get(self.constants.find{|klass_name| klass_name.to_s.downcase == name.downcase })
+      self.const_get(self.constants.find { |klass_name| klass_name.to_s.downcase == name.downcase })
     rescue LoadError
-      UI.error "Could not find gem 'guard-#{name}', please add it in your Gemfile."
+      UI.error "Could not find gem 'guard-#{name}', please add it to your Gemfile."
     end
 
+    # @private
     def locate_guard(name)
       `gem which guard/#{name}`.chomp
     rescue

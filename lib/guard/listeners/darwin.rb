@@ -1,27 +1,9 @@
 module Guard
+
+  # @private
   class Darwin < Listener
+
     attr_reader :fsevent
-
-    def initialize
-      super
-      @fsevent = FSEvent.new
-    end
-
-    def on_change(&callback)
-      @fsevent.watch Dir.pwd do |modified_dirs|
-        files = modified_files(modified_dirs)
-        update_last_event
-        callback.call(files)
-      end
-    end
-
-    def start
-      @fsevent.run
-    end
-
-    def stop
-      @fsevent.stop
-    end
 
     def self.usable?
       require 'rb-fsevent'
@@ -36,5 +18,27 @@ module Guard
       false
     end
 
+    def initialize
+      super
+
+      @fsevent = FSEvent.new
+    end
+
+    def start
+      @fsevent.run
+    end
+
+    def stop
+      @fsevent.stop
+    end
+
+    def on_change(&callback)
+      @fsevent.watch Dir.pwd do |modified_dirs|
+        files = modified_files(modified_dirs)
+        update_last_event
+        callback.call(files)
+      end
+    end
   end
+
 end

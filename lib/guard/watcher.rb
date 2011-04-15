@@ -1,11 +1,13 @@
 module Guard
+
+  # @private
   class Watcher
     attr_accessor :pattern, :action
-    
-    def initialize(pattern, action = nil)
+
+    def initialize(pattern, action=nil)
       @pattern, @action = pattern, action
       @@warning_printed ||= false
-      
+
       # deprecation warning
       if @pattern.is_a?(String) && @pattern =~ /(^(\^))|(>?(\\\.)|(\.\*))|(\(.*\))|(\[.*\])|(\$$)/
         unless @@warning_printed
@@ -13,11 +15,11 @@ module Guard
           UI.info "You have strings in your Guardfile's watch patterns that seem to represent regexps.\nGuard matchs String with == and Regexp with Regexp#match.\nYou should either use plain String (without Regexp special characters) or real Regexp.\n"
           @@warning_printed = true
         end
-        UI.info "\"#{@pattern}\" has been converted to #{Regexp.new(@pattern).inspect}\n"
         @pattern = Regexp.new(@pattern)
+        UI.info "\"#{@pattern.source}\" has been converted to #{@pattern.inspect}\n"
       end
     end
-    
+
     def self.match_files(guard, files)
       guard.watchers.inject([]) do |paths, watcher|
         files.each do |file|
@@ -33,15 +35,15 @@ module Guard
         paths.flatten.map { |p| p.to_s }
       end
     end
-    
-    def self.match_files?(guards, files)
-      guards.any? do |guard|
+
+    def self.guards_matching_files?(guards, files)
+      guards.select do |guard|
         guard.watchers.any? do |watcher|
           files.any? { |file| watcher.match_file?(file) }
         end
       end
     end
-    
+
     def match_file?(file)
       if @pattern.is_a?(Regexp)
         file.match(@pattern)
@@ -49,7 +51,7 @@ module Guard
         file == @pattern ? [file] : nil
       end
     end
-    
+
     def call_action(matches)
       begin
         @action.arity > 0 ? @action.call(matches) : @action.call
@@ -57,6 +59,6 @@ module Guard
         UI.error "Problem with watch action!"
       end
     end
-    
+
   end
 end

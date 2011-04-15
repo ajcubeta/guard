@@ -1,14 +1,13 @@
 module Guard
+
+  # @private
   class Polling < Listener
     attr_reader :callback, :latency
 
     def initialize
       super
-      @latency = 1.5
-    end
 
-    def on_change(&callback)
-      @callback = callback
+      @latency = 1.5
     end
 
     def start
@@ -18,6 +17,10 @@ module Guard
 
     def stop
       @stop = true
+    end
+
+    def on_change(&callback)
+      @callback = callback
     end
 
   private
@@ -32,6 +35,6 @@ module Guard
         sleep(nap_time) if nap_time > 0
       end
     end
-
   end
+
 end

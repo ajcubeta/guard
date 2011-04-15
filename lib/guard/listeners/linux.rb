@@ -1,6 +1,22 @@
 module Guard
+
+  # @private
   class Linux < Listener
+
     attr_reader :inotify, :files, :latency, :callback
+
+    def self.usable?
+      require 'rb-inotify'
+      if !defined?(INotify::VERSION) || Gem::Version.new(INotify::VERSION.join('.')) < Gem::Version.new('0.5.1')
+        UI.info "Please update rb-inotify (>= 0.5.1)"
+        false
+      else
+        true
+      end
+    rescue LoadError
+      UI.info "Please install rb-inotify gem for Linux inotify support"
+      false
+    end
 
     def initialize
       super
@@ -30,19 +46,6 @@ module Guard
     rescue Interrupt
     end
 
-    def self.usable?
-      require 'rb-inotify'
-      if !defined?(INotify::VERSION) || Gem::Version.new(INotify::VERSION.join('.')) < Gem::Version.new('0.5.1')
-        UI.info "Please update rb-inotify (>= 0.5.1)"
-        false
-      else
-        true
-      end
-    rescue LoadError
-      UI.info "Please install rb-inotify gem for Linux inotify support"
-      false
-    end
-
     def watch_change?
       !!@watch_change
     end
@@ -69,6 +72,6 @@ module Guard
       end
       @watch_change = false
     end
-
   end
+
 end
