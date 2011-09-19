@@ -2,16 +2,19 @@ module Guard
 
   # @private
   class Guard
-    attr_accessor :watchers, :options
+    include Hook
 
-    def initialize(watchers=[], options={})
+    attr_accessor :watchers, :options, :group
+
+    def initialize(watchers = [], options = {})
+      @group = options.delete(:group) || :default
       @watchers, @options = watchers, options
     end
 
     # Guardfile template needed inside guard gem
     def self.init(name)
       if ::Guard::Dsl.guardfile_include?(name)
-        ::Guard::UI.info "Guardfile already include #{name} guard"
+        ::Guard::UI.info "Guardfile already includes #{name} guard"
       else
         content = File.read('Guardfile')
         guard   = File.read("#{::Guard.locate_guard(name)}/lib/guard/#{name}/templates/Guardfile")

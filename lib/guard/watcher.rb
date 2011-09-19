@@ -4,7 +4,7 @@ module Guard
   class Watcher
     attr_accessor :pattern, :action
 
-    def initialize(pattern, action=nil)
+    def initialize(pattern, action = nil)
       @pattern, @action = pattern, action
       @@warning_printed ||= false
 
@@ -36,8 +36,8 @@ module Guard
       end
     end
 
-    def self.guards_matching_files?(guards, files)
-      guards.select do |guard|
+    def self.match_files?(guards, files)
+      guards.any? do |guard|
         guard.watchers.any? do |watcher|
           files.any? { |file| watcher.match_file?(file) }
         end
@@ -52,11 +52,15 @@ module Guard
       end
     end
 
+    def self.match_guardfile?(files)
+      files.any? { |file| "#{Dir.pwd}/#{file}" == Dsl.guardfile_path }
+    end
+
     def call_action(matches)
       begin
         @action.arity > 0 ? @action.call(matches) : @action.call
-      rescue
-        UI.error "Problem with watch action!"
+      rescue Exception => e
+        UI.error "Problem with watch action!\n#{e.message}\n\n#{e.backtrace.join("\n")}"
       end
     end
 

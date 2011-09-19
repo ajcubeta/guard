@@ -3,42 +3,43 @@ module Guard
   # @private
   class Darwin < Listener
 
-    attr_reader :fsevent
+    def initialize(*)
+      super
+
+    def worker
+      @fsevent
+    end
+
+    def start
+      super
+      worker.run
+    end
+
+    def stop
+      super
+      worker.stop
+    end
 
     def self.usable?
       require 'rb-fsevent'
-      if !defined?(FSEvent::VERSION) || Gem::Version.new(FSEvent::VERSION) < Gem::Version.new('0.3.9')
-        UI.info "Please update rb-fsevent (>= 0.3.9)"
+      if !defined?(FSEvent::VERSION) || (defined?(Gem::Version) &&
+          Gem::Version.new(FSEvent::VERSION) < Gem::Version.new('0.4.0'))
+        UI.info "Please update rb-fsevent (>= 0.4.0)"
         false
       else
         true
       end
-    rescue LoadError
-      UI.info "Please install rb-fsevent gem for Mac OSX FSEvents support"
-      false
     end
 
-    def initialize
-      super
+  private
 
-      @fsevent = FSEvent.new
-    end
-
-    def start
-      @fsevent.run
-    end
-
-    def stop
-      @fsevent.stop
-    end
-
-    def on_change(&callback)
-      @fsevent.watch Dir.pwd do |modified_dirs|
+    def watch(directory)
+      worker.watch(directory) do |modified_dirs|
         files = modified_files(modified_dirs)
-        update_last_event
-        callback.call(files)
+        @callback.call(files) unless files.empty?
       end
     end
+
   end
 
 end
